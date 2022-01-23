@@ -3,13 +3,17 @@ import "./featured.scss";
 import "animate.css";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Add, ThumbUpAltOutlined, ThumbDownOutlined } from "@material-ui/icons";
 //import { FiMoreHorizontal } from "react-icons/fi";
 import { FaTimesCircle } from "react-icons/fa";
 import { HiOutlineDownload } from "react-icons/hi";
 import { FiVolume2, FiVolumeX } from "react-icons/fi";
 import axios from "axios";
+import { ListContext } from "../../context/listContext/ListContext";
+import { getLists } from "../../context/listContext/apiCalls";
+import ListModalSeries from "../list/ListModalSeries";
+import AppUrl from "../../classes/AppUrl";
 
 export default function Featured({
   type,
@@ -25,6 +29,9 @@ export default function Featured({
   time,
   year,
   index,
+  selectTerm,
+  setSelectTerm,
+  movies,
 }) {
   const [selectedId, setSelectedId] = useState(null);
   const [startVideo, setStartVideo] = useState(false);
@@ -33,6 +40,12 @@ export default function Featured({
   const [y, setY] = useState(window.scrollY);
   const [volume, setVolume] = useState(false);
   const [volume_detail, setVolumeDetail] = useState(false);
+
+  const { lists, dispatch: listDispatch } = useContext(ListContext);
+
+  useEffect(() => {
+    getLists(listDispatch);
+  }, [listDispatch]);
 
   const navigate = useNavigate();
 
@@ -134,6 +147,11 @@ export default function Featured({
     startScroll();
   };
 
+  const changeSelect = (e) => {
+    setSelectTerm(e.target.value);
+    console.log(selectTerm);
+  };
+
   const more_like = [
     {
       pic: "https://occ-0-58-64.1.nflxso.net/dnm/api/v6/X194eJsgWBDE2aQbaNdmCXGUP-Y/AAAABX6QPuU2wUKTrISH7UkthsTD4mTPRpfGIojVGAfhTtmlwB_K-b-yujeN1zgpW0txJLLNWCDMCSPBP8qwhmFVX5jn32FM.webp?r=d57",
@@ -233,21 +251,39 @@ export default function Featured({
         {type && (
           <div className="category">
             {/* <span>{type === "movie" ? "Movies" : "Series"}</span> */}
-            <select name="genre" id="genre">
-              <option>{type === "movie" ? "Movies" : "Series"}</option>
-              <option value="adventure">Adventure</option>
+            <select name="genre" id="genre" onChange={(e) => changeSelect(e)}>
+              <option value={""}>
+                {type === "movie" ? "Select a category" : "Select a category"}
+              </option>
+              {type === "movie"
+                ? lists
+                    // eslint-disable-next-line array-callback-return
+                    .filter((i) => {
+                      if (i.type === "Movies") {
+                        return i;
+                      }
+                    })
+                    .map((item) => (
+                      <option value={item._id}>{item.title}</option>
+                    ))
+                : lists
+                    // eslint-disable-next-line array-callback-return
+                    .filter((i) => {
+                      if (i.type === "Series") {
+                        return i;
+                      }
+                    })
+                    .map((item) => (
+                      <option value={item._id}>{item.title}</option>
+                    ))}
+              {/* <option value="adventure">Adventure</option>
               <option value="comedy">Comedy</option>
               <option value="crime">Crime</option>
               <option value="fantasy">Fantasy</option>
               <option value="historical">Historical</option>
               <option value="horror">Horror</option>
               <option value="romance">Romance</option>
-              <option value="sci-fi">Sci-fi</option>
-              {/* <option value="thriller">Thriller</option>
-              <option value="western">Western</option>
-              <option value="animation">Animation</option>
-              <option value="drama">Drama</option>
-              <option value="documentary">Documentary</option> */}
+              <option value="sci-fi">Sci-fi</option> */}
             </select>
           </div>
         )}
@@ -255,7 +291,7 @@ export default function Featured({
         {startHeroVideo ? (
           <>
             <video
-              src={video}
+              src={AppUrl.base_url + movies.trailer}
               autoPlay={true}
               id="hero_video"
               style={{
@@ -272,7 +308,11 @@ export default function Featured({
           </>
         ) : (
           <>
-            <img src={pic} alt="" className="hero_img" />
+            <img
+              src={AppUrl.base_url + movies.img}
+              alt=""
+              className="hero_img"
+            />
           </>
         )}
 
@@ -310,7 +350,7 @@ export default function Featured({
 
         <div className="info">
           <img
-            src={title_pic}
+            src={AppUrl.base_url + movies.imgTitle}
             alt=""
             data-aos="fade-right"
             data-aos-duration="1000"
@@ -323,7 +363,7 @@ export default function Featured({
             data-aos-duration="1000"
             data-aos-easing="ease-in-out"
           >
-            {des}
+            {movies.desc}
           </span>
           <div
             className="buttons"
@@ -393,7 +433,7 @@ export default function Featured({
                       //   stiffness: 80,
                       // }}
                     >
-                      <img src={pic} alt="" />
+                      <img src={AppUrl.base_url + movies.img} alt="" />
                     </motion.div>
                     <motion.div
                       className="more_card_info"
@@ -405,13 +445,13 @@ export default function Featured({
                         stiffness: 40,
                       }}
                     >
-                      <h4 className="more_card_info_title">{"Spider Man"}</h4>
+                      <h4 className="more_card_info_title">{movies.title}</h4>
                       <div className="more_card_info_other">
-                        <p className="more_card_info_year">{year}</p>
-                        <p className="more_card_info_age">{age}</p>
-                        <p className="more_card_info_time">{time}</p>
+                        <p className="more_card_info_year">{movies.year}</p>
+                        <p className="more_card_info_age">{movies.age}</p>
+                        <p className="more_card_info_time">{movies.time}</p>
                       </div>
-                      <p className="more_card_info_des">{des}</p>
+                      <p className="more_card_info_des">{movies.desc}</p>
                     </motion.div>
                   </motion.div>
                   <motion.div
@@ -474,7 +514,7 @@ export default function Featured({
                   {startVideo ? (
                     <>
                       <video
-                        src={video}
+                        src={AppUrl.base_url + movies.trailer}
                         autoPlay={true}
                         loop
                         style={{
@@ -487,12 +527,16 @@ export default function Featured({
                     </>
                   ) : (
                     <>
-                      <img src={pic} alt="" className="more_modal_img" />
+                      <img
+                        src={AppUrl.base_url + movies.img}
+                        alt=""
+                        className="more_modal_img"
+                      />
                     </>
                   )}
 
                   <motion.img
-                    src={title_pic}
+                    src={AppUrl.base_url + movies.imgTitle}
                     alt=""
                     className="more_title_image"
                     initial={{ y: 100, opacity: 0 }}
@@ -572,14 +616,14 @@ export default function Featured({
                       exit={{ x: -100, opacity: 0 }}
                     >
                       <motion.div className="more_modal_itemInfoTop">
-                        <motion.span>{year}</motion.span>
+                        <motion.span>{movies.year}</motion.span>
                         <motion.span className="more_modal_limit">
-                          {age}
+                          {movies.age}
                         </motion.span>
-                        <motion.span>{time}</motion.span>
+                        <motion.span>{movies.time}</motion.span>
                       </motion.div>
                       <motion.div className="more_modal_iteminfo_des">
-                        {des}
+                        {movies.desc}
                       </motion.div>
                     </motion.div>
 
@@ -597,26 +641,28 @@ export default function Featured({
                     >
                       <motion.div className="more_modal_info_right_director">
                         <motion.p>
-                          <motion.span>Director:</motion.span> {director}
+                          <motion.span>Director:</motion.span> {movies.director}
                         </motion.p>
                       </motion.div>
                       <motion.div className="more_modal_info_right_cast">
                         <motion.p>
-                          <motion.span>Cast:</motion.span> {cast}
+                          <motion.span>Cast:</motion.span> {movies.cast}
                         </motion.p>
                       </motion.div>
                       <motion.div className="more_modal_info_right_writer">
                         <motion.p>
-                          <motion.span>Writer:</motion.span> {writer}
+                          <motion.span>Writer:</motion.span> {movies.writer}
                         </motion.p>
                       </motion.div>
                       <motion.div className="more_modal_info_right_genres">
                         <motion.p>
-                          <motion.span>Genres:</motion.span> {genre}
+                          <motion.span>Genres:</motion.span> {movies.genre}
                         </motion.p>
                       </motion.div>
                     </motion.div>
                   </motion.div>
+
+                  <ListModalSeries />
 
                   <div className="more_like_div">
                     <motion.p
@@ -645,6 +691,7 @@ export default function Featured({
                     >
                       {more_like.map((item, index) => (
                         <motion.div
+                          key={index}
                           className="more_like_card"
                           onClick={() => watch_movie()}
                           initial={{ scale: 1 }}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 //import ListItem from "../../components/listItem/ListItem";
 import Navbar from "../../components/navbar/Navbar";
 import Featured from "../../components/featured/Featured";
@@ -8,27 +8,60 @@ import Footer from "../../components/footer/Footer";
 import LazyLoad from "react-lazyload";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { ListContext } from "../../context/listContext/ListContext";
+import { getLists } from "../../context/listContext/apiCalls";
 
 const Movies = () => {
-  const [list, setList] = useState([]);
+  const [selectTerm, setSelectTerm] = useState("");
+
+  const { lists, dispatch: listDispatch } = useContext(ListContext);
 
   useEffect(() => {
-    const getList = async () => {
+    getLists(listDispatch);
+  }, [listDispatch]);
+
+  const [movies, setMovies] = useState([]);
+
+  useEffect(() => {
+    const getMovies = async () => {
       try {
-        const res = await axios.get("lists", {
+        const res = await axios.get("/movies/random", {
           headers: {
             token:
-              "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxY2M1MWJkZmYzMmVjNmVlNjNjMTk3YyIsImlzQWRtaW4iOnRydWUsImlhdCI6MTY0MDc5MDkwNywiZXhwIjoxNjQxMjIyOTA3fQ.MBMBdlXfQ4plX__Axh76C2gWHCH593KfX7YakHMUDuM",
+              "Bearer " + JSON.parse(localStorage.getItem("user")).accessToken,
           },
         });
-        //console.log(res);
-        setList(res.data);
+        console.log(res);
+        setMovies(res.data);
       } catch (err) {
         console.log(err);
       }
     };
-    getList();
+    getMovies();
+    return () => {
+      setMovies([]); // This worked for me
+    };
   }, []);
+
+  // const [list, setList] = useState([]);
+
+  // useEffect(() => {
+  //   const getList = async () => {
+  //     try {
+  //       const res = await axios.get("lists", {
+  //         headers: {
+  //           token:
+  //             "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYxY2M1MWJkZmYzMmVjNmVlNjNjMTk3YyIsImlzQWRtaW4iOnRydWUsImlhdCI6MTY0MDc5MDkwNywiZXhwIjoxNjQxMjIyOTA3fQ.MBMBdlXfQ4plX__Axh76C2gWHCH593KfX7YakHMUDuM",
+  //         },
+  //       });
+  //       //console.log(res);
+  //       setList(res.data);
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   };
+  //   getList();
+  // }, []);
 
   const pic =
     "https://occ-0-58-64.1.nflxso.net/dnm/api/v6/6AYY37jfdO6hpXcMjf9Yu5cnmO0/AAAABR5n93_UPBpOPkJIyuzSCMhERS_O7ONE64IFI0qHG32uGoHMH4Ysfn-zLqbHm6tuZ_TCRinolz1_N604T8o2Uy97Ldau.webp?r=696";
@@ -42,29 +75,54 @@ const Movies = () => {
     <>
       <div className="home">
         {/* <Navbar /> */}
-        <Featured
-          index={2}
-          pic={pic}
-          title_pic={title_pic}
-          des={des}
-          video={video}
-          year={"2021"}
-          age={"18+"}
-          time={"1h 30m"}
-          cast={"Ronald, Shreya"}
-          director={"Ronald"}
-          writer={"Ronald"}
-          genre={"Action, Comedy"}
-          type={"movie"}
-        />
-        <List list_header={"Recently Added"} />
+        {movies
+          // eslint-disable-next-line array-callback-return
+          .filter((i) => {
+            if (i.type === "Movie") {
+              return i;
+            }
+          })
+          .map((item) => (
+            <Featured
+              key={item._id}
+              index={2}
+              pic={pic}
+              title_pic={title_pic}
+              des={des}
+              video={video}
+              year={"2021"}
+              age={"18+"}
+              time={"1h 30m"}
+              cast={"Ronald, Shreya"}
+              director={"Ronald"}
+              writer={"Ronald"}
+              genre={"Action, Comedy"}
+              type={"movie"}
+              selectTerm={selectTerm}
+              setSelectTerm={setSelectTerm}
+              movies={item}
+            />
+          ))}
+        {lists
+          // eslint-disable-next-line array-callback-return
+          .filter((i) => {
+            if (selectTerm === "" && i.type === "Movies") {
+              return i;
+            } else if (i._id === selectTerm && i.type === "Movies") {
+              return i;
+            }
+          })
+          .map((item) => (
+            <List key={item._id} list_header={item.title} list_id={item._id} />
+          ))}
+        {/* <List list_header={"Recently Added"} /> */}
         {/* <LazyLoad offset={50} once={true}>
           {list.map((item) => (
             <List list_header={item.title} key={item._id} list={item} />
           ))} */}
-        <List list_header={"Trending Now"} />
+        {/* <List list_header={"Trending Now"} />
         <List list_header={"Indian Movies"} />
-        <List list_header={"Comedy Movies"} />
+        <List list_header={"Comedy Movies"} /> */}
         {/* </LazyLoad> */}
       </div>
       {/* <div className="mylist">

@@ -96,7 +96,7 @@ const MusicList = ({
       <div className="music_list_div" style={{ marginTop: marginTop }}>
         <div className="music_list_header">
           <p>{header}</p>
-          <p>{header_below}</p>
+          {/* <p>{header_below}</p> */}
         </div>
         <div className="music_list_main">
           <Slider className="music_list_slider_main" {...settings1}>
